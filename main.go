@@ -1,8 +1,8 @@
 /*
-file:   mp3tagInfo
+file:   mp3taginfo
 author: johnny
 descr:  The tag tool reads metadata from media files (as supported by the tag library).
-usage:  mp3tag <directory/file>
+usage:  mp3taginfo <directory/file>
 */
 package main
 
@@ -20,7 +20,7 @@ import (
 
 // ===== FUNCTIONS =====================================================
 func usage() {
-	fmt.Fprintf(os.Stderr, "m3uCreator\n")
+	fmt.Fprintf(os.Stderr, "mp3taginfo\n")
 	flag.PrintDefaults()
 	os.Exit(0)
 }
@@ -102,7 +102,6 @@ func main() {
 	printTitle()
 	for _, file = range files {
 		if strings.Contains(file, ".mp3") {
-			// MP3TAG info of a file
 			filPtr, err = os.Open(file)
 			if err != nil {
 				fmt.Printf("error loading file (%v): %v", file, err)
@@ -244,8 +243,6 @@ func printMetadata(m tag.Metadata, errorKey int, x int) {
 }
 
 func printTitle() {
-	//format  idtype 	genre	year	album	disc	discCount	trackCount	comment
-
 	fmt.Printf("%4s| ", "")
 	fmt.Printf("%4s|", "")
 	fmt.Printf("%-8.8s|", "1")
@@ -265,6 +262,7 @@ func printTitle() {
 	fmt.Printf("%-8.8s|", "1024")
 	fmt.Printf("%-16.16s", "")
 	fmt.Printf("\n")
+
 	fmt.Printf("%4s| ", "err")
 	fmt.Printf("%-4.4s|", "x")
 	fmt.Printf("%-8.8s|", "Format")
