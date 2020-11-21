@@ -1,3 +1,3 @@
 package version
 
-var BuildVersion = 0.650
+var BuildVersion = 0.660
