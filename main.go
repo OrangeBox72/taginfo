@@ -280,6 +280,7 @@ func main() {
 			} else {    // if they are the same
 				// compare each file/record against the control var data
 				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) || all || (song.picSize < minimumPicSize) || trackcount || disccount {
+					errCode = ""
 					if !titlePrinted {
 						printTitle()
 						titlePrinted = true
