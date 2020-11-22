@@ -89,7 +89,7 @@ func maskedSongInfo(s songInfo) songInfo {				// this masks out unique info
 	if !composer {
 		s.composer = ""
 	}
-	if !comments {
+	if !comment {
 		s.comment = ""
 	}
 	return s
@@ -123,26 +123,6 @@ func printTitle() {
 	var l = 176
 
 	fmt.Println(strings.Repeat("-", l))
-	// fmt.Printf("|%16s|", "")
-	// fmt.Printf("%4s|", "")
-	// fmt.Printf("%-8.8s|", "f")
-	// fmt.Printf("%-4.4s|", "i")
-	// fmt.Printf("%-8.8s|", "g")
-	// fmt.Printf("%4s|", "y")
-	// fmt.Printf("%-16.16s|", "b")
-	// fmt.Printf("%1s|", "d")
-	// fmt.Printf("%1s|", "D")
-	// fmt.Printf("%2s|", "t")
-	// fmt.Printf("%3s|", "T")
-	// fmt.Printf("%-12.12s|", "A")
-	// fmt.Printf("%-12.12s|", "a")
-	// fmt.Printf("%-16.16s|", "s")
-	// fmt.Printf("%-8.8s|", "c")
-	// fmt.Printf("%-12.12s|", "C")
-	// fmt.Printf("%-9.9s|", "p")
-	// fmt.Printf("%-16.16s", "P")
-	// fmt.Printf("\n")
-
 	fmt.Printf("|%16s|", "err")
 	fmt.Printf("%-4.4s|", "x")
 	fmt.Printf("%-8.8s|", "(f)ormat")
@@ -154,7 +134,7 @@ func printTitle() {
 	fmt.Printf("%3s|", "(D)")
 	fmt.Printf("%3s|", "(t)")
 	fmt.Printf("%3s|", "(T)")
-	fmt.Printf("%-12.12s|", "(A)lbmArtst")
+	fmt.Printf("%-12.12s|", "albm(A)rtst")
 	fmt.Printf("%-12.12s|", "(a)rtist")
 	fmt.Printf("%-16.16s|", "(t)itle")
 	fmt.Printf("%-8.8s|", "(c)ompsr")
@@ -169,9 +149,10 @@ func printTitle() {
 
 
 // ===== GLOBAL VARS ===================================================
-var comments bool
+var comment bool
 var composer bool
 var disccount bool
+var picture bool
 var trackcount bool
 
 
@@ -195,9 +176,10 @@ func main() {
 	// commandline vars
 	var allPtr *bool
 	var all bool
-	var commentsPtr *bool
+	var commentPtr *bool
 	var composerPtr *bool
 	var disccountPtr *bool
+	var picturePtr *bool
 	var trackcountPtr *bool
 	var sourcePtr *string
 	var source string
@@ -217,9 +199,10 @@ func main() {
 	minimumPicSize = 4500
 	// ----- Passed Args ----------
 	allPtr = flag.Bool("all", false, "Prints info on ALL files regardless of Tag irregularities")
-	commentsPtr = flag.Bool("comments", false, "compares *comment* fields")
+	commentPtr = flag.Bool("comment", false, "compares *comment* fields")
 	composerPtr = flag.Bool("composer", false, "compares *composer* fields")
 	disccountPtr = flag.Bool("disccountzero", false, "checks for EMPTY *disccount*")
+	picturePtr = flag.Bool("picture", true, "compares *picture* fields")
 	sourcePtr = flag.String("src", "", "<REQUIRED> Source of MP3's to parse for Tags")
 	trackcountPtr = flag.Bool("trackcountzero", false, "checks for EMPTY *trackcount*")
 	usagePtr = flag.Bool("usage", false, "This message")
@@ -227,9 +210,10 @@ func main() {
 	flag.Parse()
 
 	all = *allPtr
-	comments = *commentsPtr
+	comment = *commentPtr
 	composer = *composerPtr
 	disccount = *disccountPtr
+	picture = *picturePtr
 	trackcount = *trackcountPtr
 	source = *sourcePtr
 
@@ -279,17 +263,8 @@ func main() {
 				errCode = ""
 			} else {    // if they are the same
 				// compare each file/record against the control var data
-				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) || all || (song.picSize < minimumPicSize) || trackcount || disccount {
+				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) || all || (picture && (song.picSize < minimumPicSize)) || trackcount || disccount {
 					errCode = ""
-					if !titlePrinted {
-						printTitle()
-						titlePrinted = true
-					}
-					if !song1Printed {
-						printSong(comparedSong, "", x-1)
-						song1Printed = true
-					}
-
 					if song.format != comparedSong.format {
 						errCode = errCode + "f"
 					}
@@ -318,20 +293,31 @@ func main() {
 							errCode = errCode + "T"
 						}
 					}
-					if song.composer != comparedSong.composer {
+					if song.composer != comparedSong.composer && composer {
 						errCode = errCode + "c"
 					}
-					if song.comment != comparedSong.comment {
+					if song.comment != comparedSong.comment && comment {
 						errCode = errCode + "C"
 					}
-					if song.picSize != comparedSong.picSize {
+					if song.picSize != comparedSong.picSize && picture {
 						errCode = errCode + "p"
 					}
-					if song.picSize < minimumPicSize {
+					if song.picSize < minimumPicSize && picture {
 						errCode = errCode + "P"
 					}
-					printSong(song, errCode, x)
 				} //eoif triggered Masked songs dont equal
+				if errCode > "" || all {
+					if !titlePrinted {
+						printTitle()
+						titlePrinted = true
+					}
+					if !song1Printed {
+						printSong(comparedSong, "", x-1)
+						song1Printed = true
+					}
+					printSong(song, errCode, x)
+				}
+//				} //eoif triggered Masked songs dont equal
 			} //eoElse songs are same
 		} //eoif mp3 filetype
 	} // eoif range of files traverse
