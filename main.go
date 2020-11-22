@@ -179,6 +179,7 @@ func main() {
 	var commentPtr *bool
 	var composerPtr *bool
 	var disccountPtr *bool
+	var minimumPicSizePtr *int
 	var picturePtr *bool
 	var trackcountPtr *bool
 	var sourcePtr *string
@@ -196,12 +197,13 @@ func main() {
 
 	titlePrinted = false
 	song1Printed = false
-	minimumPicSize = 4500
+//	minimumPicSize = 4500
 	// ----- Passed Args ----------
 	allPtr = flag.Bool("all", false, "Prints info on ALL files regardless of Tag irregularities")
 	commentPtr = flag.Bool("comment", false, "compares *comment* fields")
 	composerPtr = flag.Bool("composer", false, "compares *composer* fields")
 	disccountPtr = flag.Bool("disccountzero", false, "checks for EMPTY *disccount*")
+	minimumPicSizePtr = flag.Int("minimumpicsize", 8000, "compares *picSize* fields against this minimum value" )
 	picturePtr = flag.Bool("picture", true, "compares *picture* fields")
 	sourcePtr = flag.String("src", "", "<REQUIRED> Source of MP3's to parse for Tags")
 	trackcountPtr = flag.Bool("trackcountzero", false, "checks for EMPTY *trackcount*")
@@ -213,6 +215,7 @@ func main() {
 	comment = *commentPtr
 	composer = *composerPtr
 	disccount = *disccountPtr
+	minimumPicSize = *minimumPicSizePtr
 	picture = *picturePtr
 	trackcount = *trackcountPtr
 	source = *sourcePtr
