@@ -266,7 +266,13 @@ func main() {
 				errCode = ""
 			} else {    // if they are the same
 				// compare each file/record against the control var data
-				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) || all || (picture && (song.picSize < minimumPicSize)) || trackcount || disccount {
+				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) ||
+					all ||
+					(picture && (song.picSize < minimumPicSize)) ||
+					trackcount ||
+					disccount ||
+					(song.year == 0) {
+
 					errCode = ""
 					if song.format != comparedSong.format {
 						errCode = errCode + "f"
@@ -277,7 +283,7 @@ func main() {
 					if song.genre != comparedSong.genre {
 						errCode = errCode + "g"
 					}
-					if song.year != comparedSong.year {
+					if song.year != comparedSong.year || (song.year == 0) {
 						errCode = errCode + "y"
 					}
 					if song.album != comparedSong.album {
