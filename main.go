@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"github.com/OrangeBox72/mp3tagInfo/version"
+//	"github.com/OrangeBox72/mp3tagInfo/version"
 	"github.com/dhowden/tag"
 )
 // ===== STRUCTS =======================================================
@@ -39,8 +39,11 @@ type songInfo struct {
 
 // ===== FUNCTIONS =====================================================
 func usage() {
-	fmt.Printf("%v - Version: %v\n", os.Args[0], version.BuildVersion)
+	//fmt.Printf("%v - Version: %v\n", os.Args[0], version.BuildVersion)   //  THIS is a HEADACHE!
+	fmt.Printf("%v - Version: %v\n", os.Args[0], "0.83")
+  fmt.Printf(" ex.  %v -src=./\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "\n")
+  fmt.Printf("  FLAGS ---------\n")
 	flag.PrintDefaults()
 	os.Exit(0)
 }
@@ -83,8 +86,6 @@ func getSongInfo(smd tag.Metadata) songInfo {
 // --------------------
 func maskedSongInfo(s songInfo) songInfo {				// this masks out unique info
 	s.track = 0
-	s.albumArtist = ""
-	s.artist = ""
 	s.title = ""
 	if !composer {
 		s.composer = ""
@@ -119,7 +120,7 @@ func printSong(s songInfo, errorKey string, x int) {
 }
 
 // --------------------
-func printTitle() {
+func printRecordHeader() {
 	var l = 176
 
 	fmt.Println(strings.Repeat("-", l))
@@ -157,8 +158,6 @@ var trackcount bool
 
 
 
-
-
 // ===== MAIN ==========================================================
 func main() {
 	// Vars ------------------------
@@ -191,22 +190,23 @@ func main() {
 	var errCode string
 //	var songTrack int
 	var x int
-	var titlePrinted bool
+	var recordHeaderPrinted bool
 	var song1Printed bool
 	var minimumPicSize int
 
-	titlePrinted = false
+  // ----- Initializations ------
+  recordHeaderPrinted = false
 	song1Printed = false
-//	minimumPicSize = 4500
+
 	// ----- Passed Args ----------
 	allPtr = flag.Bool("all", false, "Prints info on ALL files regardless of Tag irregularities")
 	commentPtr = flag.Bool("comment", false, "compares *comment* fields")
 	composerPtr = flag.Bool("composer", false, "compares *composer* fields")
-	disccountPtr = flag.Bool("disccountzero", false, "checks for EMPTY *disccount*")
+	disccountPtr = flag.Bool("disccountzero", true, "checks for EMPTY *disccount*")
 	minimumPicSizePtr = flag.Int("minimumpicsize", 8000, "compares *picSize* fields against this minimum value" )
 	picturePtr = flag.Bool("picture", true, "compares *picture* fields")
 	sourcePtr = flag.String("src", "", "<REQUIRED> Source of MP3's to parse for Tags")
-	trackcountPtr = flag.Bool("trackcountzero", false, "checks for EMPTY *trackcount*")
+	trackcountPtr = flag.Bool("trackcountzero", true, "checks for EMPTY *trackcount*")
 	usagePtr = flag.Bool("usage", false, "This message")
 	versionPtr = flag.Bool("version", false, "Version info")
 	flag.Parse()
@@ -253,81 +253,93 @@ func main() {
 				fmt.Printf("error reading file (%v): %v\n", file, err)
 				return
 			}
-//			errCode = ""
-
 			// Gather song data
 			x++
 			song = getSongInfo(songMetadata)
-			if albumName != song.album {				// ie processing a new ablum
-				//  set your control var data for album
-				comparedSong = song
-//RIGHT HERE  <--- I HAVE NO CLUE NOW.. WHAT I WAS DOING HERE
-				albumName = comparedSong.album
-				errCode = ""
-			} else {    // if they are the same
-				// compare each file/record against the control var data
-				if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) ||
-					all ||
-					(picture && (song.picSize < minimumPicSize)) ||
-					trackcount ||
-					disccount ||
-					(song.year == 0) {
-
-					errCode = ""
-					if song.format != comparedSong.format {
-						errCode = errCode + "f"
-					}
-					if song.idtype != comparedSong.idtype {
-						errCode = errCode + "i"
-					}
-					if song.genre != comparedSong.genre {
-						errCode = errCode + "g"
-					}
-					if song.year != comparedSong.year || (song.year == 0) {
-						errCode = errCode + "y"
-					}
-					if song.album != comparedSong.album {
-						errCode = errCode + "a"
-					}
-					if song.disc != comparedSong.disc {
-						errCode = errCode + "d"
-					}
-					if (song.discCount != comparedSong.discCount) || (disccount && song.discCount == 0) {
-						if !strings.Contains(errCode, "D") {
-							errCode = errCode + "D"
-						}
-					}
-					if (song.trackCount != comparedSong.trackCount) || (trackcount && song.trackCount == 0) {
-						if !strings.Contains(errCode, "T") {
-							errCode = errCode + "T"
-						}
-					}
-					if song.composer != comparedSong.composer && composer {
-						errCode = errCode + "c"
-					}
-					if song.comment != comparedSong.comment && comment {
-						errCode = errCode + "C"
-					}
-					if song.picSize != comparedSong.picSize && picture {
-						errCode = errCode + "p"
-					}
-					if song.picSize < minimumPicSize && picture {
-						errCode = errCode + "P"
-					}
-				} //eoif triggered Masked songs dont equal
-				if errCode > "" || all {
-					if !titlePrinted {
-						printTitle()
-						titlePrinted = true
-					}
-					if !song1Printed {
-						printSong(comparedSong, "", x-1)
-						song1Printed = true
-					}
-					printSong(song, errCode, x)
+      if all { //print all - forget all flags and checks
+			  if !recordHeaderPrinted {
+				  printRecordHeader()
+				  recordHeaderPrinted = true
 				}
-//				} //eoif triggered Masked songs dont equal
-			} //eoElse songs are same
+        //NOTE: This ALL will not print any errors when printing all info
+				printSong(song, errCode, x)
+      } else {
+			  if albumName != song.album {				// ie processing a new ablum
+				//  set your control var data for album
+				  comparedSong = song
+				  albumName = comparedSong.album
+				  errCode = ""
+			  } else {    //if songs are NOT from the same album
+				  // compare each file/record against the control var data
+				  if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) ||
+					  all ||
+					  (picture && (song.picSize < minimumPicSize)) ||
+					  trackcount ||
+					  disccount ||
+					  (song.year == 0) {
+					  errCode = ""
+					  if song.format != comparedSong.format {
+					  	errCode = errCode + "f"
+					  }
+					  if song.idtype != comparedSong.idtype {
+					  	errCode = errCode + "i"
+					  }
+					  if song.genre != comparedSong.genre {
+					  	errCode = errCode + "g"
+					  }
+					  if song.year != comparedSong.year || (song.year == 0) {
+						  errCode = errCode + "y"
+					  }
+					  if song.album != comparedSong.album {
+						  errCode = errCode + "b"
+					  }
+					  if song.disc != comparedSong.disc {
+						  errCode = errCode + "d"
+					  }
+					  if (song.discCount != comparedSong.discCount) || (disccount && song.discCount == 0) {
+						  if !strings.Contains(errCode, "D") {
+							  errCode = errCode + "D"
+						  }
+					  }
+					  if (song.trackCount != comparedSong.trackCount) || (trackcount && song.trackCount == 0) {
+						  if !strings.Contains(errCode, "T") {
+							  errCode = errCode + "T"
+						  }
+					  }
+					  if song.albumArtist != comparedSong.albumArtist {
+						  errCode = errCode + "A"
+					  }
+					  if song.artist != comparedSong.artist {
+						  errCode = errCode + "a"
+					  }
+					  if song.composer != comparedSong.composer && composer {
+						  errCode = errCode + "C"
+					  }
+					  if song.comment != comparedSong.comment && comment {
+						  errCode = errCode + "c"
+					  }
+					  if song.picSize != comparedSong.picSize && picture {
+					  	errCode = errCode + "p"
+					  }
+					  if song.picSize < minimumPicSize && picture {
+						  errCode = errCode + "P"
+					  }
+				  } //eoif triggered Masked/compared song doesnt equal
+
+          if errCode > "" {
+            if !recordHeaderPrinted {
+              printRecordHeader()
+              recordHeaderPrinted = true
+            }
+            if !song1Printed {
+              printSong(comparedSong, "", x-1)
+              song1Printed = true
+            }
+            printSong(song, errCode, x)
+          }
+			  } //eoElse songs are NOT from the same album
+      } //eoElse not ALL flag
 		} //eoif mp3 filetype
 	} // eoif range of files traverse
 } // eoif Main
+// have a cookie
