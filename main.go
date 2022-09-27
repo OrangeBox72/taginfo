@@ -1,150 +1,150 @@
 /*
-file:	 mp3taginfo
+file:   mp3taginfo
 author: johnny
-descr:	The tag tool reads metadata from media files (as supported by the tag library).
-usage:	mp3taginfo -src=<directory/file>
+descr:  The tag tool reads metadata from media files (as supported by the tag library).
+usage:  mp3taginfo -src=<directory/file>
 */
 package main
 
 import (
-	/*	"encoding/json"	*/
-	"flag"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-//	"github.com/OrangeBox72/mp3tagInfo/version"
-	"github.com/dhowden/tag"
+  /*  "encoding/json"  */
+  "flag"
+  "fmt"
+  "os"
+  "path/filepath"
+  "strconv"
+  "strings"
+//  "github.com/OrangeBox72/mp3tagInfo/version"
+  "github.com/dhowden/tag"
 )
 // ===== STRUCTS =======================================================
 type songInfo struct {
-	format			string
-	idtype			string
-	genre				string
-	year				int
-	album				string
-	disc				int
-	discCount		int
-	track				int
-	trackCount	int
-	albumArtist	string
-	artist			string
-	title				string
-	composer		string
-	comment			string
-	picture			string
-	picSize			int
+  format       string
+  idtype       string
+  genre        string
+  year         int
+  album        string
+  disc         int
+  discCount    int
+  track        int
+  trackCount   int
+  albumArtist  string
+  artist       string
+  title        string
+  composer     string
+  comment      string
+  picture      string
+  picSize      int
 }
 
 // ===== FUNCTIONS =====================================================
 func usage() {
-	//fmt.Printf("%v - Version: %v\n", os.Args[0], version.BuildVersion)   //  THIS is a HEADACHE!
-	fmt.Printf("%v - Version: %v\n", os.Args[0], "0.83")
+  //fmt.Printf("%v - Version: %v\n", os.Args[0], version.BuildVersion)   //  THIS is a HEADACHE!
+  fmt.Printf("%v - Version: %v\n", os.Args[0], "0.83")
   fmt.Printf(" ex.  %v -src=./\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "\n")
+  fmt.Fprintf(os.Stderr, "\n")
   fmt.Printf("  FLAGS ---------\n")
-	flag.PrintDefaults()
-	os.Exit(0)
+  flag.PrintDefaults()
+  os.Exit(0)
 }
 
 // --------------------
 func check(e error) {
-	if e != nil {
-		panic(e)
-	}
+  if e != nil {
+    panic(e)
+  }
 }
 
 // --------------------
 func getSongInfo(smd tag.Metadata) songInfo {
-	var s songInfo
-	var pic *tag.Picture
+  var s songInfo
+  var pic *tag.Picture
 
-	s.format = string(smd.Format())
-	s.idtype = string(smd.FileType())
-	s.genre = smd.Genre()
-	s.year = smd.Year()
-	s.album = smd.Album()
-	s.disc, s.discCount = smd.Disc()
-	s.track, s.trackCount = smd.Track()
-	s.albumArtist = smd.AlbumArtist()
-	s.artist = smd.Artist()
-	s.title = smd.Title()
-	s.composer = smd.Composer()
-	s.comment = smd.Comment()
-	if smd.Picture() != nil {
-		pic = smd.Picture()
-		s.picture = pic.Ext + "_" + pic.MIMEType + "_" + pic.Type + "_" + pic.Description + "_" + strconv.Itoa(len(pic.Data))
-		s.picSize = len(pic.Data)
-	} else {
-		s.picture = "nil"
-		s.picSize = 0
-	}
-	return s
+  s.format = string(smd.Format())
+  s.idtype = string(smd.FileType())
+  s.genre = smd.Genre()
+  s.year = smd.Year()
+  s.album = smd.Album()
+  s.disc, s.discCount = smd.Disc()
+  s.track, s.trackCount = smd.Track()
+  s.albumArtist = smd.AlbumArtist()
+  s.artist = smd.Artist()
+  s.title = smd.Title()
+  s.composer = smd.Composer()
+  s.comment = smd.Comment()
+  if smd.Picture() != nil {
+    pic = smd.Picture()
+    s.picture = pic.Ext + "_" + pic.MIMEType + "_" + pic.Type + "_" + pic.Description + "_" + strconv.Itoa(len(pic.Data))
+    s.picSize = len(pic.Data)
+  } else {
+    s.picture = "nil"
+    s.picSize = 0
+  }
+  return s
 }
 
 // --------------------
-func maskedSongInfo(s songInfo) songInfo {				// this masks out unique info
-	s.track = 0
-	s.title = ""
-	if !composer {
-		s.composer = ""
-	}
-	if !comment {
-		s.comment = ""
-	}
-	return s
+func maskedSongInfo(s songInfo) songInfo {        // this masks out unique info
+  s.track = 0
+  s.title = ""
+  if !composer {
+    s.composer = ""
+  }
+  if !comment {
+    s.comment = ""
+  }
+  return s
 }
 
 // --------------------
 func printSong(s songInfo, errorKey string, x int) {
-	fmt.Printf("|%16s|", errorKey)
-	fmt.Printf("%4d|", x)
-	fmt.Printf("%-8.8s|", s.format)
-	fmt.Printf("%-4.4s|", s.idtype)
-	fmt.Printf("%-8.8s|", s.genre)
-	fmt.Printf("%4d|", s.year)
-	fmt.Printf("%-16.16s|", s.album)
-	fmt.Printf("%3d|", s.disc)
-	fmt.Printf("%3d|", s.discCount)
-	fmt.Printf("%3d|", s.track)
-	fmt.Printf("%3d|", s.trackCount)
-	fmt.Printf("%-12.12s|", s.albumArtist)
-	fmt.Printf("%-12.12s|", s.artist)
-	fmt.Printf("%-16.16s|", s.title)
-	fmt.Printf("%-8.8s|", s.composer)
-	fmt.Printf("%-12.12s|", s.comment)
-	fmt.Printf("%9d|", s.picSize)
-	fmt.Printf("%-16.16s|", s.picture)
-	fmt.Printf("\n")
+  fmt.Printf("|%16s|", errorKey)
+  fmt.Printf("%4d|", x)
+  fmt.Printf("%-8.8s|", s.format)
+  fmt.Printf("%-4.4s|", s.idtype)
+  fmt.Printf("%-8.8s|", s.genre)
+  fmt.Printf("%4d|", s.year)
+  fmt.Printf("%-16.16s|", s.album)
+  fmt.Printf("%3d|", s.disc)
+  fmt.Printf("%3d|", s.discCount)
+  fmt.Printf("%3d|", s.track)
+  fmt.Printf("%3d|", s.trackCount)
+  fmt.Printf("%-12.12s|", s.albumArtist)
+  fmt.Printf("%-12.12s|", s.artist)
+  fmt.Printf("%-16.16s|", s.title)
+  fmt.Printf("%-8.8s|", s.composer)
+  fmt.Printf("%-12.12s|", s.comment)
+  fmt.Printf("%9d|", s.picSize)
+  fmt.Printf("%-16.16s|", s.picture)
+  fmt.Printf("\n")
 }
 
 // --------------------
 func printRecordHeader() {
-	var l = 176
+  var l = 176
 
-	fmt.Println(strings.Repeat("-", l))
-	fmt.Printf("|%16s|", "err")
-	fmt.Printf("%-4.4s|", "x")
-	fmt.Printf("%-8.8s|", "(f)ormat")
-	fmt.Printf("%-4.4s|", "(i)d")
-	fmt.Printf("%-8.8s|", "(g)enre")
-	fmt.Printf("%4s|", "(y)r")
-	fmt.Printf("%-16.16s|", "al(b)um")
-	fmt.Printf("%3s|", "(d)")
-	fmt.Printf("%3s|", "(D)")
-	fmt.Printf("%3s|", "(t)")
-	fmt.Printf("%3s|", "(T)")
-	fmt.Printf("%-12.12s|", "albm(A)rtst")
-	fmt.Printf("%-12.12s|", "(a)rtist")
-	fmt.Printf("%-16.16s|", "(t)itle")
-	fmt.Printf("%-8.8s|", "(c)ompsr")
-	fmt.Printf("%-12.12s|", "(C)omment")
-	fmt.Printf("%-9.9s|", "(P)icSize")
-	fmt.Printf("%-16.16s", "(p)icture")
-	fmt.Printf("\n")
+  fmt.Println(strings.Repeat("-", l))
+  fmt.Printf("|%16s|", "err")
+  fmt.Printf("%-4.4s|", "x")
+  fmt.Printf("%-8.8s|", "(f)ormat")
+  fmt.Printf("%-4.4s|", "(i)d")
+  fmt.Printf("%-8.8s|", "(g)enre")
+  fmt.Printf("%4s|", "(y)r")
+  fmt.Printf("%-16.16s|", "al(b)um")
+  fmt.Printf("%3s|", "(d)")
+  fmt.Printf("%3s|", "(D)")
+  fmt.Printf("%3s|", "(t)")
+  fmt.Printf("%3s|", "(T)")
+  fmt.Printf("%-12.12s|", "albm(A)rtst")
+  fmt.Printf("%-12.12s|", "(a)rtist")
+  fmt.Printf("%-16.16s|", "(t)itle")
+  fmt.Printf("%-8.8s|", "(c)ompsr")
+  fmt.Printf("%-12.12s|", "(C)omment")
+  fmt.Printf("%-9.9s|", "(P)icSize")
+  fmt.Printf("%-16.16s", "(p)icture")
+  fmt.Printf("\n")
 
-	fmt.Println(strings.Repeat("-", l))
+  fmt.Println(strings.Repeat("-", l))
 }
 
 
@@ -160,171 +160,171 @@ var trackcount bool
 
 // ===== MAIN ==========================================================
 func main() {
-	// Vars ------------------------
-	var filPtr *os.File
-	var songMetadata tag.Metadata
-	var comparedSong songInfo
-	var song songInfo
-//	var cleanedSong songInfo
-//	var cleanedComparedSong songInfo
+  // Vars ------------------------
+  var filPtr *os.File
+  var songMetadata tag.Metadata
+  var comparedSong songInfo
+  var song songInfo
+//  var cleanedSong songInfo
+//  var cleanedComparedSong songInfo
 
-	var err error
-	var files []string
-	var file string
+  var err error
+  var files []string
+  var file string
 
-	// commandline vars
-	var allPtr *bool
-	var all bool
-	var commentPtr *bool
-	var composerPtr *bool
-	var disccountPtr *bool
-	var minimumPicSizePtr *int
-	var picturePtr *bool
-	var trackcountPtr *bool
-	var sourcePtr *string
-	var source string
-	var usagePtr *bool
-	var versionPtr *bool
+  // commandline vars
+  var allPtr *bool
+  var all bool
+  var commentPtr *bool
+  var composerPtr *bool
+  var disccountPtr *bool
+  var minimumPicSizePtr *int
+  var picturePtr *bool
+  var trackcountPtr *bool
+  var sourcePtr *string
+  var source string
+  var usagePtr *bool
+  var versionPtr *bool
 
-	var albumName string
-	var errCode string
-//	var songTrack int
-	var x int
-	var recordHeaderPrinted bool
-	var song1Printed bool
-	var minimumPicSize int
+  var albumName string
+  var errCode string
+//  var songTrack int
+  var x int
+  var recordHeaderPrinted bool
+  var song1Printed bool
+  var minimumPicSize int
 
   // ----- Initializations ------
   recordHeaderPrinted = false
-	song1Printed = false
+  song1Printed = false
 
-	// ----- Passed Args ----------
-	allPtr = flag.Bool("all", false, "Prints info on ALL files regardless of Tag irregularities")
-	commentPtr = flag.Bool("comment", false, "compares *comment* fields")
-	composerPtr = flag.Bool("composer", false, "compares *composer* fields")
-	disccountPtr = flag.Bool("disccountzero", true, "checks for EMPTY *disccount*")
-	minimumPicSizePtr = flag.Int("minimumpicsize", 8000, "compares *picSize* fields against this minimum value" )
-	picturePtr = flag.Bool("picture", true, "compares *picture* fields")
-	sourcePtr = flag.String("src", "", "<REQUIRED> Source of MP3's to parse for Tags")
-	trackcountPtr = flag.Bool("trackcountzero", true, "checks for EMPTY *trackcount*")
-	usagePtr = flag.Bool("usage", false, "This message")
-	versionPtr = flag.Bool("version", false, "Version info")
-	flag.Parse()
+  // ----- Passed Args ----------
+  allPtr = flag.Bool("all", false, "Prints info on ALL files regardless of Tag irregularities")
+  commentPtr = flag.Bool("comment", false, "compares *comment* fields")
+  composerPtr = flag.Bool("composer", false, "compares *composer* fields")
+  disccountPtr = flag.Bool("disccountzero", true, "checks for EMPTY *disccount*")
+  minimumPicSizePtr = flag.Int("minimumpicsize", 8000, "compares *picSize* fields against this minimum value" )
+  picturePtr = flag.Bool("picture", true, "compares *picture* fields")
+  sourcePtr = flag.String("src", "", "<REQUIRED> Source of MP3's to parse for Tags")
+  trackcountPtr = flag.Bool("trackcountzero", true, "checks for EMPTY *trackcount*")
+  usagePtr = flag.Bool("usage", false, "This message")
+  versionPtr = flag.Bool("version", false, "Version info")
+  flag.Parse()
 
-	all = *allPtr
-	comment = *commentPtr
-	composer = *composerPtr
-	disccount = *disccountPtr
-	minimumPicSize = *minimumPicSizePtr
-	picture = *picturePtr
-	trackcount = *trackcountPtr
-	source = *sourcePtr
+  all = *allPtr
+  comment = *commentPtr
+  composer = *composerPtr
+  disccount = *disccountPtr
+  minimumPicSize = *minimumPicSizePtr
+  picture = *picturePtr
+  trackcount = *trackcountPtr
+  source = *sourcePtr
 
-	// check for usage, version, or no given source
-	if *usagePtr || *versionPtr || source == "" {
-		usage()
-	}
+  // check for usage, version, or no given source
+  if *usagePtr || *versionPtr || source == "" {
+    usage()
+  }
 
-	// ----- Gather all files
-	err = filepath.Walk(source, func(pathedFilename string, info os.FileInfo, err error) error {
-		files = append(files, pathedFilename)
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
+  // ----- Gather all files
+  err = filepath.Walk(source, func(pathedFilename string, info os.FileInfo, err error) error {
+    files = append(files, pathedFilename)
+    return nil
+  })
+  if err != nil {
+    panic(err)
+  }
 
-	// ----- Parse files
-	x = 0
-	albumName = ""
-	errCode = ""
-	for _, file = range files {
-		if strings.Contains(file, ".mp3") {
-			filPtr, err = os.Open(file)
-			if err != nil {
-				fmt.Printf("error loading file (%v): %v", file, err)
-				return
-			}
-			defer filPtr.Close()
-			songMetadata, err = tag.ReadFrom(filPtr) // read metadata from file
-			filPtr.Close()
+  // ----- Parse files
+  x = 0
+  albumName = ""
+  errCode = ""
+  for _, file = range files {
+    if strings.Contains(file, ".mp3") {
+      filPtr, err = os.Open(file)
+      if err != nil {
+        fmt.Printf("error loading file (%v): %v", file, err)
+        return
+      }
+      defer filPtr.Close()
+      songMetadata, err = tag.ReadFrom(filPtr) // read metadata from file
+      filPtr.Close()
 
-			if err != nil {
-				fmt.Printf("error reading file (%v): %v\n", file, err)
-				return
-			}
-			// Gather song data
-			x++
-			song = getSongInfo(songMetadata)
+      if err != nil {
+        fmt.Printf("error reading file (%v): %v\n", file, err)
+        return
+      }
+      // Gather song data
+      x++
+      song = getSongInfo(songMetadata)
       if all { //print all - forget all flags and checks
-			  if !recordHeaderPrinted {
-				  printRecordHeader()
-				  recordHeaderPrinted = true
-				}
+        if !recordHeaderPrinted {
+          printRecordHeader()
+          recordHeaderPrinted = true
+        }
         //NOTE: This ALL will not print any errors when printing all info
-				printSong(song, errCode, x)
+        printSong(song, errCode, x)
       } else {
-			  if albumName != song.album {				// ie processing a new ablum
-				//  set your control var data for album
-				  comparedSong = song
-				  albumName = comparedSong.album
-				  errCode = ""
-			  } else {    //if songs are NOT from the same album
-				  // compare each file/record against the control var data
-				  if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) ||
-					  all ||
-					  (picture && (song.picSize < minimumPicSize)) ||
-					  trackcount ||
-					  disccount ||
-					  (song.year == 0) {
-					  errCode = ""
-					  if song.format != comparedSong.format {
-					  	errCode = errCode + "f"
-					  }
-					  if song.idtype != comparedSong.idtype {
-					  	errCode = errCode + "i"
-					  }
-					  if song.genre != comparedSong.genre {
-					  	errCode = errCode + "g"
-					  }
-					  if song.year != comparedSong.year || (song.year == 0) {
-						  errCode = errCode + "y"
-					  }
-					  if song.album != comparedSong.album {
-						  errCode = errCode + "b"
-					  }
-					  if song.disc != comparedSong.disc {
-						  errCode = errCode + "d"
-					  }
-					  if (song.discCount != comparedSong.discCount) || (disccount && song.discCount == 0) {
-						  if !strings.Contains(errCode, "D") {
-							  errCode = errCode + "D"
-						  }
-					  }
-					  if (song.trackCount != comparedSong.trackCount) || (trackcount && song.trackCount == 0) {
-						  if !strings.Contains(errCode, "T") {
-							  errCode = errCode + "T"
-						  }
-					  }
-					  if song.albumArtist != comparedSong.albumArtist {
-						  errCode = errCode + "A"
-					  }
-					  if song.artist != comparedSong.artist {
-						  errCode = errCode + "a"
-					  }
-					  if song.composer != comparedSong.composer && composer {
-						  errCode = errCode + "C"
-					  }
-					  if song.comment != comparedSong.comment && comment {
-						  errCode = errCode + "c"
-					  }
-					  if song.picSize != comparedSong.picSize && picture {
-					  	errCode = errCode + "p"
-					  }
-					  if song.picSize < minimumPicSize && picture {
-						  errCode = errCode + "P"
-					  }
-				  } //eoif triggered Masked/compared song doesnt equal
+        if albumName != song.album {        // ie processing a new ablum
+        //  set your control var data for album
+          comparedSong = song
+          albumName = comparedSong.album
+          errCode = ""
+        } else {    //if songs are NOT from the same album
+          // compare each file/record against the control var data
+          if (maskedSongInfo(comparedSong) != maskedSongInfo(song)) ||
+            all ||
+            (picture && (song.picSize < minimumPicSize)) ||
+            trackcount ||
+            disccount ||
+            (song.year == 0) {
+            errCode = ""
+            if song.format != comparedSong.format {
+              errCode = errCode + "f"
+            }
+            if song.idtype != comparedSong.idtype {
+              errCode = errCode + "i"
+            }
+            if song.genre != comparedSong.genre {
+              errCode = errCode + "g"
+            }
+            if song.year != comparedSong.year || (song.year == 0) {
+              errCode = errCode + "y"
+            }
+            if song.album != comparedSong.album {
+              errCode = errCode + "b"
+            }
+            if song.disc != comparedSong.disc {
+              errCode = errCode + "d"
+            }
+            if (song.discCount != comparedSong.discCount) || (disccount && song.discCount == 0) {
+              if !strings.Contains(errCode, "D") {
+                errCode = errCode + "D"
+              }
+            }
+            if (song.trackCount != comparedSong.trackCount) || (trackcount && song.trackCount == 0) {
+              if !strings.Contains(errCode, "T") {
+                errCode = errCode + "T"
+              }
+            }
+            if song.albumArtist != comparedSong.albumArtist {
+              errCode = errCode + "A"
+            }
+            if song.artist != comparedSong.artist {
+              errCode = errCode + "a"
+            }
+            if song.composer != comparedSong.composer && composer {
+              errCode = errCode + "C"
+            }
+            if song.comment != comparedSong.comment && comment {
+              errCode = errCode + "c"
+            }
+            if song.picSize != comparedSong.picSize && picture {
+              errCode = errCode + "p"
+            }
+            if song.picSize < minimumPicSize && picture {
+              errCode = errCode + "P"
+            }
+          } //eoif triggered Masked/compared song doesnt equal
 
           if errCode > "" {
             if !recordHeaderPrinted {
@@ -337,9 +337,9 @@ func main() {
             }
             printSong(song, errCode, x)
           }
-			  } //eoElse songs are NOT from the same album
+        } //eoElse songs are NOT from the same album
       } //eoElse not ALL flag
-		} //eoif mp3 filetype
-	} // eoif range of files traverse
+    } //eoif mp3 filetype
+  } // eoif range of files traverse
 } // eoif Main
 // have a cookie
