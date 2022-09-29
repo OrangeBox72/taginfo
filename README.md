@@ -1,4 +1,4 @@
-# H1 mp3taginfo
+# mp3taginfo
 ---
 ![screen shot](images/screenshot1.png)
 
