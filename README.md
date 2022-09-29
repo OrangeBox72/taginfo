@@ -31,4 +31,5 @@
   -usage
     	This message
   -version
-    	Version info```
+    	Version info
+```
