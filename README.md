@@ -7,7 +7,7 @@ Prints and checks mp3 tags.
 Compares various meta data elements and throws flags to indicate where differences are found.
 Groups on meta-tags 'Artist' and 'Album'
 
-`./mp3taginfo - Version: 0.83
+>./mp3taginfo - Version: 0.83
  ex.  ./mp3taginfo -src=./
 
   FLAGS ---------
@@ -30,5 +30,5 @@ Groups on meta-tags 'Artist' and 'Album'
   -usage
     	This message
   -version
-    	Version info`
+    	Version info
 
