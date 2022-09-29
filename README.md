@@ -7,7 +7,8 @@
 - Compares various meta data elements and throws flags to indicate where differences are found.
 - Groups on meta-tags 'Artist' and 'Album'
 
-Inline `./mp3taginfo - Version: 0.83
+```
+./mp3taginfo - Version: 0.83
  ex.  ./mp3taginfo -src=./
 
   FLAGS ---------
@@ -30,4 +31,4 @@ Inline `./mp3taginfo - Version: 0.83
   -usage
     	This message
   -version
-    	Version info`
+    	Version info```
