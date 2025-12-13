@@ -14,8 +14,8 @@ import (
 
 // AlbumSummary holds the summary for each album in the JSON.
 type AlbumSummary struct {
-	AlbumName string     `json:"album_name"`
-	Status    string     `json:"status"` // "ok", "issues", or "warning"
+	AlbumName string   `json:"album_name"`
+	Status    string   `json:"status"` // "ok", "issues", or "warning"
 	Summary   struct { // nested anonymous struct for small footprint
 		SongsTotal int `json:"songs_total"`
 		Issues     int `json:"issues"`
@@ -41,6 +41,7 @@ const (
 	ansiRed    = "\u001b[31m"
 	ansiGreen  = "\u001b[32m"
 	ansiYellow = "\u001b[33m"
+	ansiBlue   = "\u001b[34m"
 	// bold not required, but available:
 	ansiBold = "\u001b[1m"
 )
@@ -84,12 +85,12 @@ func compareSongs(a, b songInfo, cfg config) string {
 	if cfg.Comment && a.Comment != b.Comment {
 		errKey += "c"
 	}
-	if cfg.Picture && a.PicSize != b.PicSize {
-		errKey += "p"
-	}
-	if cfg.Picture && b.PicSize < cfg.MinPicSize {
-		errKey += "P"
-	}
+	//if cfg.Picture && a.PicSize != b.PicSize {
+	//	errKey += "p"
+	//}
+	//if cfg.Picture && b.PicSize < cfg.MinPicSize {
+	//	errKey += "P"
+	//}
 	return errKey
 }
 
@@ -119,58 +120,54 @@ func BuildAlbumReports(songs []songInfo, cfg config) (FinalReport, []songInfo) {
 	albumsIssues := 0
 	albumsWarn := 0
 
+	for albumName, list := range albumMap {
+		var alb AlbumSummary
+		alb.AlbumName = albumName
+		alb.Songs = make([]songInfo, 0, len(list))
+		alb.Summary.SongsTotal = len(list)
+		alb.Summary.Issues = 0
 
-for albumName, list := range albumMap {
-    var alb AlbumSummary
-    alb.AlbumName = albumName
-    alb.Songs = make([]songInfo, 0, len(list))
-    alb.Summary.SongsTotal = len(list)
-    alb.Summary.Issues = 0
+		baseline := list[0]
+		for _, s := range list {
+			errKey := compareSongs(baseline, s, cfg)
+			s.ErrorKey = errKey
+			alb.Songs = append(alb.Songs, s)
+			if errKey != "" {
+				alb.Summary.Issues++
+			}
+		}
 
-    baseline := list[0]
-    for _, s := range list {
-        errKey := compareSongs(baseline, s, cfg)
-        s.ErrorKey = errKey
-        alb.Songs = append(alb.Songs, s)
-        if errKey != "" {
-            alb.Summary.Issues++
-        }
-    }
+		// Determine album status
+		if alb.Summary.Issues > 0 {
+			alb.Status = "issues"
+			albumsIssues++
+		} else {
+			warns := 0
+			for _, s := range alb.Songs {
+				if cfg.Picture && s.PicSize == 0 {
+					warns++
+				}
+				if cfg.TrackCountZero && s.TrackCount == 0 {
+					warns++
+				}
+				if s.Year == 0 {
+					warns++
+				}
+			}
+			if warns > 0 {
+				alb.Status = "warning"
+				albumsWarn++
+			} else {
+				alb.Status = "ok"
+				albumsOK++
+			}
+		}
 
-    // Determine album status
-    if alb.Summary.Issues > 0 {
-        alb.Status = "issues"
-        albumsIssues++
-    } else {
-        warns := 0
-        for _, s := range alb.Songs {
-            if cfg.Picture && s.PicSize == 0 {
-                warns++
-            }
-            if cfg.TrackCountZero && s.TrackCount == 0 {
-                warns++
-            }
-            if s.Year == 0 {
-                warns++
-            }
-        }
-        if warns > 0 {
-            alb.Status = "warning"
-            albumsWarn++
-        } else {
-            alb.Status = "ok"
-            albumsOK++
-        }
-    }
-
-    // Append if album has any relevance OR -all flag is set
-    if cfg.AllAll || cfg.All || alb.Status != "ok" {
-        report.Albums = append(report.Albums, alb)
-    }
-}
-
-
-
+		// Append if album has any relevance OR -all flag is set
+		if cfg.AllAll || cfg.All || alb.Status != "ok" {
+			report.Albums = append(report.Albums, alb)
+		}
+	}
 
 	// finalize totals
 	report.SummaryTotals.AlbumsOK = albumsOK
@@ -190,29 +187,33 @@ for albumName, list := range albumMap {
 	return report, flat
 }
 
-
-func PrintANSIAlbumSummary(r FinalReport, cfg config) {
+// PrintAlbumSummary prints the album summary table to terminal using ANSI colors.
+func PrintAlbumSummary(r FinalReport, cfg config) {
 	hline := strings.Repeat("─", 55)
 	fmt.Println()
 	fmt.Println(hline)
 
+	tt02 := ansiRed + "f" + ansiGreen + "ormat"
+	tt09 := ansiRed + "T" + ansiGreen + "k"
+
 	// 🔹 Error Code Legend
 	fmt.Printf("%sLegend:%s ", ansiBold, ansiReset)
-	fmt.Printf("%sf%s=format ", ansiRed, ansiReset)
-	fmt.Printf("%si%s=id ", ansiRed, ansiReset)
-	fmt.Printf("%sg%s=genre ", ansiRed, ansiReset)
-	fmt.Printf("%sy%s=year ", ansiRed, ansiReset)
-	fmt.Printf("%sb%s=album ", ansiRed, ansiReset)
-	fmt.Printf("%sd%s=disc ", ansiRed, ansiReset)
-	fmt.Printf("%sD%s=disc# ", ansiRed, ansiReset)
-	fmt.Printf("%sT%s=track# ", ansiRed, ansiReset)
-	fmt.Printf("%sA%s=albumArtist ", ansiRed, ansiReset)
-	fmt.Printf("%sa%s=artist ", ansiRed, ansiReset)
-	fmt.Printf("%sC%s=composer ", ansiRed, ansiReset)
-	fmt.Printf("%sc%s=comment ", ansiRed, ansiReset)
-	fmt.Printf("%sp%s=picSize ", ansiRed, ansiReset)
-	fmt.Printf("%sP%s=minPic\n", ansiRed, ansiReset)
-
+	//fmt.Printf("%sf%sormat ", ansiRed, ansiReset)
+	fmt.Printf("%s ", tt02)
+	fmt.Printf("%si%sd ", ansiRed, ansiReset)
+	fmt.Printf("%sg%senre ", ansiRed, ansiReset)
+	fmt.Printf("%sy%sear ", ansiRed, ansiReset)
+	fmt.Printf("al%sb%s=um ", ansiRed, ansiReset)
+	fmt.Printf("%sd%sisc ", ansiRed, ansiReset)
+	fmt.Printf("%sD%sisc# ", ansiRed, ansiReset)
+	//fmt.Printf("%sT%srack# ", ansiRed, ansiReset)
+	fmt.Printf("%s ", tt09)
+	fmt.Printf("%sA%slbumArtist ", ansiRed, ansiReset)
+	fmt.Printf("%sa%srtist ", ansiRed, ansiReset)
+	fmt.Printf("%sC%somposer ", ansiRed, ansiReset)
+	fmt.Printf("%sc%somment ", ansiRed, ansiReset)
+	fmt.Printf("%sp%sicSize ", ansiRed, ansiReset)
+	fmt.Printf("min%sP%sic\n", ansiRed, ansiReset)
 
 	fmt.Println(" Album Summary")
 	fmt.Println(hline)
@@ -220,18 +221,18 @@ func PrintANSIAlbumSummary(r FinalReport, cfg config) {
 	for _, a := range r.Albums {
 		switch a.Status {
 		case "ok":
-			fmt.Printf(" %s✅%s %-30s | %3d songs | OK\n",
-				ansiGreen, ansiReset, padRight(a.AlbumName, 30), a.Summary.SongsTotal)
+			fmt.Printf(" ✅ %-30s | %3d songs | OK\n",
+				//	ansiBlue, ansiReset, padRight(a.AlbumName, 30), a.Summary.SongsTotal)
+				padRight(a.AlbumName, 30), a.Summary.SongsTotal)
+			fmt.Printf("     %s%-2s %-30s %-12s %-20s %-20s%s\n", ansiGreen, tt09, "Title", tt02, "Artist", "AlbArt", ansiReset)
 
-//jwi add allall
-		    if cfg.AllAll {
-		        for _, s := range a.Songs {
-		            fmt.Printf("   ↳ %-30s  artist: %-20s albumArtist: %-20s\n",
-		                padRight(s.Title, 30), s.Artist, s.AlbumArtist)
-		        }
+			//jwi add allall
+			if cfg.AllAll {
+				for _, s := range a.Songs {
+					fmt.Printf("   ↳ %-2d %-30s %-4s %-4s %-20s %-20s\n",
+						s.Track, padRight(s.Title, 30), s.Format, s.IDType, s.Artist, s.AlbumArtist)
+				}
 			}
-
-
 
 		case "issues":
 			fmt.Printf(" %s⛔%s %-30s | %3d songs | ISSUES\n",
@@ -273,53 +274,17 @@ func PrintANSIAlbumSummary(r FinalReport, cfg config) {
 
 	fmt.Println(hline)
 
-//jwi
-if r.SummaryTotals.AlbumsWithIssues == 0 && r.SummaryTotals.AlbumsWithWarn == 0 {
-    fmt.Printf("%s🎉 All albums are consistent — no issues found!%s\n", ansiGreen, ansiReset)
-} else {
-//jwi eo new
-	fmt.Printf(" %s✅ %d OK albums%s, %s❌ %d with issues%s, %s⚠️ %d warnings%s\n",
-		ansiGreen, r.SummaryTotals.AlbumsOK, ansiReset,
-		ansiRed, r.SummaryTotals.AlbumsWithIssues, ansiReset,
-		ansiYellow, r.SummaryTotals.AlbumsWithWarn, ansiReset)
-//jwi one more line new stuff
-}
-	fmt.Printf(" Total songs: %d\n", r.SummaryTotals.SongsTotal)
-	fmt.Println(hline)
-}
-
-
-
-
-// PrintANSIAlbumSummary prints the album summary table to terminal using ANSI colors.
-func PrintANSIAlbumSummaryOLD(r FinalReport) {
-	// header
-	hline := strings.Repeat("─", 55)
-	fmt.Println()
-	fmt.Println(hline)
-	fmt.Println(" Album Summary")
-	fmt.Println(hline)
-
-	// each album
-	for _, a := range r.Albums {
-		switch a.Status {
-		case "ok":
-			fmt.Printf(" %s\u2B55%s %-30s | %3d songs | OK\n", ansiGreen, ansiReset, padRight(a.AlbumName, 30), a.Summary.SongsTotal)
-		case "issues":
-			fmt.Printf(" %s\u26D4%s %-30s | %3d songs | %s\n", ansiRed, ansiReset, padRight(a.AlbumName, 30), a.Summary.SongsTotal, "ISSUES")
-		case "warning":
-			fmt.Printf(" %s\u26A0%s %-30s | %3d songs | %s\n", ansiYellow, ansiReset, padRight(a.AlbumName, 30), a.Summary.SongsTotal, "WARNINGS")
-		default:
-			fmt.Printf(" %-30s | %3d songs | %s\n", padRight(a.AlbumName, 30), a.Summary.SongsTotal, a.Status)
-		}
+	// jwi
+	if r.SummaryTotals.AlbumsWithIssues == 0 && r.SummaryTotals.AlbumsWithWarn == 0 {
+		fmt.Printf("%s🎉 All albums are consistent — no issues found!%s\n", ansiGreen, ansiReset)
+	} else {
+		//jwi eo new
+		fmt.Printf(" %s✅ %d OK albums%s, %s❌ %d with issues%s, %s⚠️ %d warnings%s\n",
+			ansiGreen, r.SummaryTotals.AlbumsOK, ansiReset,
+			ansiRed, r.SummaryTotals.AlbumsWithIssues, ansiReset,
+			ansiYellow, r.SummaryTotals.AlbumsWithWarn, ansiReset)
+		// jwi one more line new stuff
 	}
-
-	fmt.Println(hline)
-	// totals line with colors
-	fmt.Printf(" %s✅ %d OK albums%s, %s❌ %d with issues%s, %s⚠️ %d warnings%s\n",
-		ansiGreen, r.SummaryTotals.AlbumsOK, ansiReset,
-		ansiRed, r.SummaryTotals.AlbumsWithIssues, ansiReset,
-		ansiYellow, r.SummaryTotals.AlbumsWithWarn, ansiReset)
 	fmt.Printf(" Total songs: %d\n", r.SummaryTotals.SongsTotal)
 	fmt.Println(hline)
 }
@@ -383,37 +348,35 @@ func WriteCSVReport(flat []songInfo, filename string) {
 	fmt.Printf("✅ CSV report written to %s\n", filename)
 }
 
-
 func WriteReports(songs []songInfo, cfg config) {
-    if len(songs) == 0 {
-        fmt.Println("No songs to report.")
-        return
-    }
+	if len(songs) == 0 {
+		fmt.Println("No songs to report.")
+		return
+	}
 
-    // Build summarized + flat reports
-    final, flat := BuildAlbumReports(songs, cfg)
+	// Build summarized + flat reports
+	final, flat := BuildAlbumReports(songs, cfg)
 
-    // Determine home directory target
-    homeDir, err := os.UserHomeDir()
-    if err != nil {
-        fmt.Println("⚠️  Could not resolve home directory, using current folder")
-        homeDir = "."
-    }
+	// Determine home directory target
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("⚠️  Could not resolve home directory, using current folder")
+		homeDir = "."
+	}
 
-    jsonPath := filepath.Join(homeDir, "tag_report.json")
-    csvPath := filepath.Join(homeDir, "tag_report.csv")
+	jsonPath := filepath.Join(homeDir, "tag_report.json")
+	csvPath := filepath.Join(homeDir, "tag_report.csv")
 
-    fmt.Printf("\n📝 Writing reports to %s ...\n", homeDir)
+	fmt.Printf("\n📝 Writing reports to %s ...\n", homeDir)
 
-    // Use your existing writers
-    WriteJSONReport(final, jsonPath)
-    WriteCSVReport(flat, csvPath)
+	// Use your existing writers
+	WriteJSONReport(final, jsonPath)
+	WriteCSVReport(flat, csvPath)
 
-    // Print album summary in ANSI colors
-    PrintANSIAlbumSummary(final, cfg)
+	// Print album summary in colors
+	PrintAlbumSummary(final, cfg)
 
-    fmt.Println("──────────────────────────────")
-    fmt.Printf(" Reports written to:\n   %s\n   %s\n", jsonPath, csvPath)
-    fmt.Println("──────────────────────────────")
+	fmt.Println("──────────────────────────────")
+	fmt.Printf(" Reports written to:\n   %s\n   %s\n", jsonPath, csvPath)
+	fmt.Println("──────────────────────────────")
 }
-
